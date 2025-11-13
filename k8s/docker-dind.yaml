@@ -1,0 +1,94 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: docker-dind-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: Immediate  
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: docker-dind-pv
+  labels:
+    type: local
+spec:
+  storageClassName: docker-dind-storage
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteOnce
+  local:
+    path: /home/zayvinshey/docker-dind
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - k8s-slave-node2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docker-dind-pvc
+  namespace: jenkins
+spec:
+  storageClassName: docker-dind-storage
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-dind
+  labels:
+    app: docker-dind
+spec:
+  selector:
+    matchLabels:
+      app: docker-dind
+  template:
+    metadata:
+      labels:
+        app: docker-dind
+    spec:
+      containers:
+        - image: 192.168.200.100/jenkins/docker:dind
+          imagePullPolicy: IfNotPresent
+          name: docker-dind
+          env:
+            - name: DOCKER_HOST
+              value: tcp://0.0.0.0:2375
+            - name: DOCKER_TLS_CERTDIR 
+              value: ""
+          volumeMounts:
+            - name: docker-dind-data-vol 
+              mountPath: /var/lib/docker/
+          ports:
+            - name: daemon-port
+              containerPort: 2375
+          securityContext:
+            privileged: true 
+      volumes:
+        - name: docker-dind-data-vol
+          persistentVolumeClaim:
+            claimName: docker-dind-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker-dind
+  labels:
+    app: docker-dind
+spec:
+  ports:
+    - port: 2375
+      targetPort: 2375
+  selector:
+    app: docker-dind
+

@@ -1,0 +1,47 @@
+pipeline {
+    agent { label 'jnlp' }
+    environment {
+        VUEIMAGE = "192.168.200.100/xxx/you-target-project"
+        PYIMAGE = "192.168.200.100/xxx/you-target-project"
+        DOCKER_USERNAME = "admin"
+        DOCKER_PASSWORD = "Harbor12345"
+    }
+    stages {
+        stage ("Import docker image") {
+            steps {
+                sh """
+                docker load -i nginx.tar
+                docker load -i python.tar
+                """
+            }
+        }
+        stage ("Build Dockerfile") {
+            steps {
+                sh """
+                docker build -t $VUEIMAGE -f ./vue/Dockerfile ./vue
+                docker build -t $PYIMAGE -f ./backend/Dockerfile ./backend
+                """
+            }
+        }
+        stage ("Push docker image") {
+            steps {
+                script {
+                    sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin 192.168.200.100'
+                }
+                sh """
+                docker push $VUEIMAGE
+                docker push $PYIMAGE
+                """
+            }
+        }
+        stage ("Run Kubernetes pod") {
+            steps {
+                sh """
+                kubectl create ns wpd || echo "Namespace wpd already exists"
+                kubectl apply -n wpd -f k8s-deployment.yaml
+                """
+            }
+        }
+    }
+}
+
