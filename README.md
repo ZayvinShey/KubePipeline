@@ -86,7 +86,7 @@ kubectl apply -f k8s/docker-dind.yaml
 - [ ] 集成 ArgoCD 或 GitOps 流程
 - [ ] 增加自动化脚本一键部署所有组件
 ---
-##项目声明
+## 项目声明
 
 本项目由 [ZayvinShey](https://github.com/ZayvinShey) 独立编写与维护，旨在帮助开发者快速搭建完整的 DevOps 学习与实践平台。内容涵盖 Kubernetes、Jenkins、GitLab、Harbor、Prometheus、Containerd 等核心组件，适用于学习环境与生产部署。
 
