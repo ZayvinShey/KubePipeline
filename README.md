@@ -1,4 +1,3 @@
-=======
 # KubeDevOps Platform
 
 一个基于 **Ubuntu Server 24** 搭建的云原生 DevOps 平台，整合了 **Kubernetes、Jenkins、GitLab、Harbor、Prometheus、Containerd** 等组件，支持 CI/CD、镜像管理与监控。
